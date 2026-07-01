@@ -19,7 +19,6 @@ Built as a portfolio project simulating a real-world deployment for a small real
 - Automatically creates a CRM record in Airtable with lead details and category
 - Sends a personalized reply email written by AI, tailored to the lead's intent and message
 - Follows up automatically at Day 3 and Day 7 if the lead hasn't responded
-- Notifies the business owner via Telegram on every new lead
 
 ---
 
@@ -28,7 +27,7 @@ Built as a portfolio project simulating a real-world deployment for a small real
 ### Pipeline 1 — Lead Intake (Triggered by form submission)
 
 ```
-Tally Form → Webhook → Parse Fields → Gemini (Categorize) → Airtable (Log Lead) → Gemini (Write Email) → Gmail (Send) → Telegram (Notify)
+Tally Form → Webhook → Parse Fields → Gemini (Categorize) → Airtable (Log Lead) → Gemini (Write Email) → Gmail (Send)
 ```
 
 ### Pipeline 2 — Follow-up Sequence (Triggered daily by schedule)
@@ -43,12 +42,11 @@ Schedule Trigger → Airtable (Search uncontacted leads) → If (leads exist?) �
 
 | Tool | Role |
 |------|------|
-| n8n (self-hosted) using railway | Workflow automation engine |
+| n8n (self-hosted) | Workflow automation engine |
 | Google Gemini 3.5 Flash | Lead categorization + email generation |
 | Airtable | Lead CRM and status tracking |
 | Tally | Lead capture form |
 | Gmail | Automated email delivery |
-| Telegram | Real-time business owner notifications |
 | Railway | n8n hosting |
 
 ---
@@ -93,7 +91,7 @@ Tested across 5 message types:
 - Clear Just Browsing ("just curious, no rush")
 - Minimal input ("looking")
 - Special characters and line breaks
-- Emoji in message body
+- Emoji or typos in message body
 
 All categorized correctly with no execution errors.
 
@@ -109,7 +107,7 @@ All categorized correctly with no execution errors.
 ### How to import
 1. In n8n, go to **Workflows → Import from File**
 2. Import each JSON file separately
-3. Reconnect credentials (Gemini API, Airtable token, Gmail OAuth, Telegram bot)
+3. Reconnect credentials (Gemini API, Airtable token, Gmail OAuth)
 4. Update the Airtable base/table IDs to match your own base
 5. Activate both workflows
 
@@ -127,4 +125,4 @@ All categorized correctly with no execution errors.
 
 ## About
 
-Built by Eumi Sabueto — AI automation developer specializing in n8n, make, Airtable, and Gemini, Claude, OpenAI business workflows.
+Built by Eumi Sabueto — AI Automation Developer specializing in n8n, Make, Zapier, Airtable, with deep expertise in integrating LLMs like Gemini, Claude, and OpenAI.
