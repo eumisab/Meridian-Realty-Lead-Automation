@@ -1,0 +1,296 @@
+{
+  "name": "Meridian follow-up",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{}] }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [0, 400],
+      "id": "749c4694-2268-428c-9240-62bd5fdb6c12",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "list",
+          "cachedResultName": "Lead Management",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_TABLE_ID",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID/YOUR_AIRTABLE_TABLE_ID"
+        },
+        "filterByFormula": "OR(   AND(     {Status} = \"New\",     IS_BEFORE({Date Received}, DATEADD(NOW(), -3, \"days\")),     {Follow-up 1 Sent} = BLANK()   ),   AND(     {Status} = \"New\",     IS_BEFORE({Date Received}, DATEADD(NOW(), -7, \"days\")),     {Follow-up 2 Sent} = BLANK()   ) )",
+        "returnAll": false,
+        "options": {},
+        "sort": { "property": [] }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [224, 400],
+      "id": "5e909a4f-ae52-44a4-bf94-126a18989478",
+      "name": "Search records",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "YOUR_AIRTABLE_CREDENTIAL_ID",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 3 },
+          "conditions": [
+            {
+              "id": "5beba852-7f3b-4b90-9a05-45757267006c",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": 3,
+              "operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [448, 400],
+      "id": "b7cd2fcb-075c-4a98-9889-5cc6359a5d84",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 3 },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.fields[\"Days Since Received\"] }}",
+                    "rightValue": 3,
+                    "operator": { "type": "number", "operation": "equals" },
+                    "id": "76992ed2-de77-4175-b4c2-799feb45c807"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 3 },
+                "conditions": [
+                  {
+                    "id": "9d57cc1e-b03c-49d0-ac1a-1081ede11cd7",
+                    "leftValue": "={{ $json.fields[\"Days Since Received\"] }}",
+                    "rightValue": 7,
+                    "operator": { "type": "number", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [672, 304],
+      "id": "c4675565-9e61-4c37-be2f-926a56c979b0",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a short, friendly follow-up email for a real estate lead who hasn't replied to our first message.\n\nLead name: {{ $json.fields.Name }}\nTheir original message: {{ $json.fields.Message }}\nCategory: {{ $json.fields.Category }}\n\nTone guidelines per category:\n- Hot Lead: slightly more urgent, mention that properties move fast and we want to make sure they don't miss out\n- Warm Lead: casual and helpful, offer to answer any questions they might have\n- Just Browsing: zero pressure, remind them we're here when they're ready, offer a free market update\n\nKeep it under 80 words. Do not use the word \"just\" (e.g. avoid \"just checking in\"). Do not use abbreviations like ASAP; write out \"as soon as possible\" instead. End with a proper closing line such as \"Best regards,\" followed by \"The Meridian Realty Team.\" Return only the email body, no subject line.",
+        "messages": { "messageValues": [] },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [896, 0],
+      "id": "0cb8727b-8f4a-4e6d-ba98-4c6092fc46f9",
+      "name": "Basic LLM Chain",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [976, 224],
+      "id": "5f9f7aa3-523b-4d2e-b075-c2ea457b115c",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_GEMINI_CREDENTIAL_ID",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Switch').item.json.fields.Email }}",
+        "subject": "=Following up on your inquiry, {{ $('Switch').item.json.fields.Name }}",
+        "emailType": "text",
+        "message": "={{ $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [1248, 112],
+      "id": "f3ec9615-b2c4-4c98-bacf-c35a790e4aef",
+      "name": "Send a message",
+      "webhookId": "YOUR_GMAIL_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "list",
+          "cachedResultName": "Lead Management",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_TABLE_ID",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID/YOUR_AIRTABLE_TABLE_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Switch').item.json.id }}",
+            "Status": "Contacted",
+            "Follow-up 1 Sent": "={{ $now }}"
+          },
+          "matchingColumns": ["id"],
+          "schema": [
+            { "id": "id", "displayName": "id", "required": false, "defaultMatch": true, "display": true, "type": "string", "readOnly": true },
+            { "id": "Status", "displayName": "Status", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{ "name": "New", "value": "New" }, { "name": "Contacted", "value": "Contacted" }, { "name": "Responded", "value": "Responded" }], "readOnly": false, "removed": false },
+            { "id": "Follow-up 1 Sent", "displayName": "Follow-up 1 Sent", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "dateTime", "readOnly": false, "removed": false },
+            { "id": "Follow-up 2 Sent", "displayName": "Follow-up 2 Sent", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "dateTime", "readOnly": false, "removed": true }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [1472, 112],
+      "id": "YOUR_UPDATE_RECORD_NODE_ID",
+      "name": "Update record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "YOUR_AIRTABLE_CREDENTIAL_ID",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "list",
+          "cachedResultName": "Lead Management",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_TABLE_ID",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID/YOUR_AIRTABLE_TABLE_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Switch').item.json.id }}",
+            "Status": "Contacted",
+            "Follow-up 2 Sent": "={{ $now }}"
+          },
+          "matchingColumns": ["id"],
+          "schema": [
+            { "id": "id", "displayName": "id", "required": false, "defaultMatch": true, "display": true, "type": "string", "readOnly": true },
+            { "id": "Status", "displayName": "Status", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{ "name": "New", "value": "New" }, { "name": "Contacted", "value": "Contacted" }, { "name": "Responded", "value": "Responded" }], "readOnly": false, "removed": false },
+            { "id": "Follow-up 1 Sent", "displayName": "Follow-up 1 Sent", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "dateTime", "readOnly": false, "removed": true },
+            { "id": "Follow-up 2 Sent", "displayName": "Follow-up 2 Sent", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "dateTime", "readOnly": false, "removed": false }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [1472, 512],
+      "id": "45c47fb0-8f53-4808-be7c-8b87cbd39fe2",
+      "name": "Update record1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "YOUR_AIRTABLE_CREDENTIAL_ID",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "Search records", "type": "main", "index": 0 }]] },
+    "Search records": { "main": [[{ "node": "If1", "type": "main", "index": 0 }]] },
+    "If1": {
+      "main": [
+        [{ "node": "Switch", "type": "main", "index": 0 }],
+        [{ "node": "No Operation, do nothing", "type": "main", "index": 0 }]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [{ "node": "Basic LLM Chain", "type": "main", "index": 0 }],
+        [{ "node": "Basic LLM Chain1", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Google Gemini Chat Model": { "ai_languageModel": [[{ "node": "Basic LLM Chain", "type": "ai_languageModel", "index": 0 }]] },
+    "Basic LLM Chain": { "main": [[{ "node": "Send a message", "type": "main", "index": 0 }]] },
+    "Send a message": { "main": [[{ "node": "Update record", "type": "main", "index": 0 }]] },
+    "Update record": { "main": [[]] },
+    "Google Gemini Chat Model1": { "ai_languageModel": [[{ "node": "Basic LLM Chain1", "type": "ai_languageModel", "index": 0 }]] },
+    "Basic LLM Chain1": { "main": [[{ "node": "Send a message1", "type": "main", "index": 0 }]] },
+    "Send a message1": { "main": [[{ "node": "Update record1", "type": "main", "index": 0 }]] },
+    "Update record1": { "main": [[]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "binaryMode": "separate", "availableInMCP": false },
+  "meta": { "instanceId": "YOUR_INSTANCE_ID" },
+  "nodeGroups": [],
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": []
+}
